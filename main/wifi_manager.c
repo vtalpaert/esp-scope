@@ -217,7 +217,7 @@ static void wifi_init_softap(void) {
     ESP_LOGI(TAG, "SoftAP Started. SSID: %s", AP_SSID);
 
     // Start DNS Server Task
-    xTaskCreate(dns_server_task, "dns_task", 2048, NULL, 5, NULL);
+    xTaskCreate(dns_server_task, "dns_task", 4096, NULL, 5, NULL);
 }
 
 static void wifi_init_station(const char* ssid, const char* pass) {

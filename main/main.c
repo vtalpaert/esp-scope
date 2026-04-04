@@ -57,7 +57,7 @@ static int s_ws_client_fd = -1;
 
 // Global configuration state
 static volatile bool s_reconfig_needed = false;
-static uint32_t s_sample_rate = 10000;
+static uint32_t s_sample_rate = 20000;
 static adc_atten_t s_atten = ADC_ATTEN_DB_12;
 static adc_bitwidth_t s_bit_width = ADC_BIT_WIDTH;
 static uint16_t s_test_hz = 100;
@@ -225,11 +225,13 @@ static void continuous_adc_init(adc_channel_t* channel, uint8_t channel_num,
   dig_cfg.adc_pattern = adc_pattern;
   ESP_ERROR_CHECK(adc_continuous_config(*out_handle, &dig_cfg));
 }
+#define TEST_SIGNAL_GPIO 4
+
 static bool ledc_inited = false;
 static void start_test_signal(uint32_t hz) {
   if (ledc_inited) {
     ESP_LOGI(TAG, "De-init test signal");
-    gpio_reset_pin(GPIO_NUM_1);
+    gpio_reset_pin(TEST_SIGNAL_GPIO);
 
     // Stop the PWM signal on channel 0
     ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
@@ -240,7 +242,7 @@ static void start_test_signal(uint32_t hz) {
     // (Optional) Uninstall fade functionality if used
     ledc_fade_func_uninstall();
   }
-  ESP_LOGI(TAG, "Starting test signal at %u Hz", hz);
+  ESP_LOGI(TAG, "Starting test signal at %u Hz on GPIO %d", hz, TEST_SIGNAL_GPIO);
   ledc_timer_config_t ledc_timer = {
       .speed_mode = LEDC_LOW_SPEED_MODE,
       .duty_resolution = LEDC_TIMER_14_BIT,
@@ -248,7 +250,7 @@ static void start_test_signal(uint32_t hz) {
       .freq_hz = hz,
       .clk_cfg = LEDC_AUTO_CLK};
   ledc_channel_config_t ledc_channel = {
-      .gpio_num = 1,  // GPIO data pin 1
+      .gpio_num = TEST_SIGNAL_GPIO,
       .speed_mode = LEDC_LOW_SPEED_MODE,
       .channel = LEDC_CHANNEL_0,
       .timer_sel = LEDC_TIMER_0,
@@ -334,22 +336,27 @@ void app_main(void) {
   gpio_set_level(CONFIG_LED_BUILTIN, 0);
 #endif
 
-#ifdef CONFIG_BOARD_SPECIFIC_INIT
+/* Board-specific initialisation hook. Defaults to boards/default.h (empty).
+ * To customise, create main/boards/<your_board>.h and set CONFIG_BOARD_SPECIFIC_INIT
+ * to "boards/<your_board>.h" via menuconfig or sdkconfig. */
 #include CONFIG_BOARD_SPECIFIC_INIT
-#endif
 
   is_ap = wifi_manager_init_wifi();
 
-  start_test_signal(100);
-  xTaskCreate(adc_read_task, "adc_read_task", 8192 + ADC_READ_LEN, NULL, 5, NULL);
-
-  // Wait for WiFi connection (Not strict blocking anymore, manager handles it)
-  // But let's keep it to print status
-  // Note: s_wifi_event_group is local to this file, we removed it in place of manager's.
-  // Proper way: expose event group from manager or just dont block here.
-  // For now, let's just proceed. The webserver will start and wait for connections.
+  // In STA mode, wait for an IP before touching hardware peripherals.
+  // ADC continuous mode on ESP32 conflicts with WiFi initialisation if started too early.
+  if (!is_ap) {
+    ESP_LOGI(TAG, "Waiting for WiFi connection...");
+    while (!is_connected()) {
+      vTaskDelay(pdMS_TO_TICKS(100));
+    }
+  }
 
   start_webserver();
+
+  start_test_signal(s_test_hz);
+  xTaskCreate(adc_read_task, "adc_read_task", 8192 + ADC_READ_LEN, NULL, 5, NULL);
+
   show_status_led();
 }
 

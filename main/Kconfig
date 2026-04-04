@@ -1,7 +1,7 @@
 menu "espScope Configuration"
     config LED_BUILTIN
         int "LED IO Pin"
-        default 15
+        default 2
         help
             LED IO pin
 
@@ -13,10 +13,11 @@ menu "espScope Configuration"
             Default is 9 (BOOT button on Seeed XIAO ESP32C6).
 
     config BOARD_SPECIFIC_INIT
-        string "Name of file containing any board specfic initialisation"
+        string "Name of file containing any board specific initialisation"
+        default "boards/default.h"
         help
             If your board requires some specific initialization C code, place it in
             a file called "./boards/<your board name>.h" and set this to "./boards/your board name.h"
-            Default is don't include any board-specific initialization file.
+            Default is boards/default.h which is empty.
 
 endmenu
