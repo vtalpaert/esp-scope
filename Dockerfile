@@ -5,7 +5,7 @@ ARG LED_BUILTIN=2
 ARG BSP_CONFIG_GPIO=9
 ARG BOARD_SPECIFIC_INIT="boards/default.h"
 
-COPY CMakeLists.txt dependencies.lock /workspace/
+COPY CMakeLists.txt /workspace/
 COPY main /workspace/main
 COPY sdkconfig.defaults /workspace/sdkconfig.defaults
 WORKDIR /workspace
