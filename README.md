@@ -60,6 +60,43 @@ If you have the esp-idf VSCode extension, just click on the flame to build, flas
    idf.py monitor
    ```
 
+### Building with Docker
+
+If you don't have ESP-IDF installed locally, you can build the firmware using the provided `Dockerfile`.
+
+1. Build the Docker image and firmware:
+   ```bash
+   docker build -t esp-scope-firmware .
+   ```
+   Optionally override board-specific config values:
+   ```bash
+   docker build \
+     --build-arg LED_BUILTIN=8 \
+     --build-arg BSP_CONFIG_GPIO=0 \
+     --build-arg BOARD_SPECIFIC_INIT="boards/xiao-esp32c6.h" \
+     -t esp-scope-firmware .
+   ```
+
+2. Copy the firmware binary out of the image:
+   ```bash
+   docker run --rm esp-scope-firmware cat /workspace/build/esp-scope.bin > esp-scope.bin
+   ```
+
+3. Flash from within Docker (Linux only, requires access to the host USB device):
+   ```bash
+   docker run --rm --device=/dev/ttyUSB0 esp-scope-firmware \
+     bash -c "source /opt/esp/idf/export.sh > /dev/null 2>&1 && \
+              idf.py -p /dev/ttyUSB0 flash"
+   ```
+   Replace `/dev/ttyUSB0` with your serial port. On macOS/Windows, flashing from inside Docker is not supported due to USB passthrough limitations — copy the binary out and flash with `esptool.py` directly.
+
+4. Monitor serial output from within Docker:
+   ```bash
+   docker run --rm -it --device=/dev/ttyUSB0 esp-scope-firmware \
+     bash -c "source /opt/esp/idf/export.sh > /dev/null 2>&1 && \
+              idf.py monitor"
+   ```
+
 ### Using the esp-scope
 
 If your DHCP server supports it (most seem to), the app sets its hostname and you can just navigate to http://esp-scope (you may have/need a default domain extension)

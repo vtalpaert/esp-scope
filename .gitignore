@@ -6,6 +6,7 @@
 /dependencies.lock
 /.cache
 /.clangd
+*.bin
 
 # Python
 __pycache__/
