@@ -263,7 +263,7 @@
 
                 <div class="control-group">
                     <label>Rate(Hz)</label>
-                    <input type="number" id="sampleRate" value="10000" min="1" max="83333">
+                    <input type="number" id="sampleRate" value="20000" min="20000" max="2000000">
                 </div>
 
                 <div class="control-group" style="display: none;">
@@ -279,10 +279,10 @@
                 <div class="control-group">
                     <label>Atten</label>
                     <select id="atten">
-                        <option value="0">0dB</option>
-                        <option value="1">2.5dB</option>
-                        <option value="2">6dB</option>
-                        <option value="3" selected>11dB</option>
+                        <option value="0">0dB (0–1.0V)</option>
+                        <option value="1">2.5dB (0–1.34V)</option>
+                        <option value="2">6dB (0–2.0V)</option>
+                        <option value="3" selected>11dB (0–3.6V)</option>
                     </select>
                 </div>
 

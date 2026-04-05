@@ -40,8 +40,11 @@ static void start_webserver(void);
 #define ADC_ATTEN ADC_ATTEN_DB_11
 #define ADC_BIT_WIDTH ADC_BITWIDTH_12
 
-#define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE2
-#define ADC_GET_DATA(p_data) ((p_data)->type2.data)
+// TYPE2 is only available on newer chips (S3, C6, etc.). ESP32 (WROOM-32) requires TYPE1.
+// #define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE2
+// #define ADC_GET_DATA(p_data) ((p_data)->type2.data)
+#define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE1
+#define ADC_GET_DATA(p_data) ((p_data)->type1.data)
 
 /*
  * Web Server Configuration
@@ -421,9 +424,15 @@ static esp_err_t params_handler(httpd_req_t* req) {
   cJSON* root = cJSON_Parse(buf);
   if (root) {
     cJSON* sample_rate = cJSON_GetObjectItem(root, "sample_rate");
-    if (sample_rate && s_sample_rate != sample_rate->valueint) {
-      s_reconfig_needed = true;
-      s_sample_rate = sample_rate->valueint;
+    if (sample_rate) {
+      uint32_t requested = (uint32_t)sample_rate->valueint;
+      // ESP32 ADC continuous mode valid range: 20kHz – 2MHz (SOC_ADC_SAMPLE_FREQ_THRES_LOW/HIGH)
+      if (requested < 20000) requested = 20000;
+      if (requested > 2000000) requested = 2000000;
+      if (s_sample_rate != requested) {
+        s_reconfig_needed = true;
+        s_sample_rate = requested;
+      }
     }
     cJSON* atten = cJSON_GetObjectItem(root, "atten");
     if (atten && s_atten != (adc_atten_t)atten->valueint) {
