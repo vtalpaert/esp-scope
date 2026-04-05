@@ -18,6 +18,22 @@ This project was written in part to test AI code generators and see if they're a
 
 ## Getting Started
 
+### Quickstart — Flash without installing anything
+
+Pre-built firmware binaries are available on the [Releases page](https://github.com/vtalpaert/esp-scope/releases/).
+
+1. Download the `.bin` file for your board:
+   - `esp-scope-esp32.bin` — generic ESP32
+   - `esp-scope-xiao-esp32c6.bin` — Seeed XIAO ESP32C6
+
+2. Connect your ESP32 via USB, then flash directly in your browser (Chrome, Edge, or Opera):
+
+   👉 **[https://www.espboards.dev/tools/program/](https://www.espboards.dev/tools/program/)**
+
+No drivers, no toolchain required.
+
+---
+
 ### Prerequisites
 - ESP32 development board.
 - [ESP-IDF](https://github.com/espressif/esp-idf) installed and configured.
