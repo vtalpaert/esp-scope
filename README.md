@@ -71,9 +71,10 @@ If you don't have ESP-IDF installed locally, you can build the firmware using th
    Optionally override board-specific config values:
    ```bash
    docker build \
+     --build-arg TARGET=esp32c6 \
      --build-arg LED_BUILTIN=8 \
      --build-arg BSP_CONFIG_GPIO=0 \
-     --build-arg BOARD_SPECIFIC_INIT="boards/xiao-esp32c6.h" \
+     --build-arg BOARD_SPECIFIC_INIT="boards/xiao_esp32c6.h" \
      -t esp-scope-firmware .
    ```
 

@@ -40,11 +40,14 @@ static void start_webserver(void);
 #define ADC_ATTEN ADC_ATTEN_DB_11
 #define ADC_BIT_WIDTH ADC_BITWIDTH_12
 
-// TYPE2 is only available on newer chips (S3, C6, etc.). ESP32 (WROOM-32) requires TYPE1.
-// #define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE2
-// #define ADC_GET_DATA(p_data) ((p_data)->type2.data)
+// TYPE1 is used on original ESP32. Newer chips (S3, C6, etc.) use TYPE2.
+#if defined(CONFIG_IDF_TARGET_ESP32)
 #define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE1
 #define ADC_GET_DATA(p_data) ((p_data)->type1.data)
+#else
+#define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE2
+#define ADC_GET_DATA(p_data) ((p_data)->type2.data)
+#endif
 
 /*
  * Web Server Configuration

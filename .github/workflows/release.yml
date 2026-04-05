@@ -6,10 +6,21 @@ on:
     tags: ['*']
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    strategy:
+      matrix:
+        include:
+          - name: esp32
+            target: esp32
+            led_builtin: 2
+            bsp_config_gpio: 9
+            board_specific_init: boards/default.h
+          - name: xiao-esp32c6
+            target: esp32c6
+            led_builtin: 8
+            bsp_config_gpio: 0
+            board_specific_init: boards/xiao_esp32c6.h
 
     steps:
       - name: Checkout
@@ -17,11 +28,35 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Build firmware
-        run: docker build -t esp-scope-firmware .
+      - name: Build firmware (${{ matrix.name }})
+        run: |
+          docker build \
+            --build-arg TARGET=${{ matrix.target }} \
+            --build-arg LED_BUILTIN=${{ matrix.led_builtin }} \
+            --build-arg BSP_CONFIG_GPIO=${{ matrix.bsp_config_gpio }} \
+            --build-arg BOARD_SPECIFIC_INIT=${{ matrix.board_specific_init }} \
+            -t esp-scope-${{ matrix.name }} .
 
-      - name: Extract binary
-        run: docker run --rm esp-scope-firmware cat /workspace/build/esp-scope.bin > esp-scope.bin
+      - name: Extract binary (${{ matrix.name }})
+        run: |
+          docker run --rm esp-scope-${{ matrix.name }} \
+            cat /workspace/build/esp-scope.bin > esp-scope-${{ matrix.name }}.bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp-scope-${{ matrix.name }}
+          path: esp-scope-${{ matrix.name }}.bin
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
 
       - name: Set release tag
         id: tag
@@ -39,4 +74,31 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           prerelease: ${{ steps.tag.outputs.prerelease }}
-          files: esp-scope.bin
+          body: |
+            ## Firmware binaries
+
+            | File | Board | Target | LED GPIO | AP-Mode button GPIO |
+            |------|-------|--------|----------|---------------------|
+            | `esp-scope-esp32.bin` | Generic ESP32 | esp32 | 2 | 9 |
+            | `esp-scope-xiao-esp32c6.bin` | Seeed XIAO ESP32C6 | esp32c6 | 8 (built-in yellow LED) | 0 (Boot button) |
+
+            ## Flashing
+
+            ### Browser (easiest)
+
+            Download the `.bin` for your board above, then flash it in your browser — no drivers or tools needed:
+
+            👉 **[https://www.espboards.dev/tools/program/](https://www.espboards.dev/tools/program/)**
+
+            Works with Chrome, Edge, or Opera. Connect your ESP via USB, click **Connect to ESP**, select the `.bin` file, and flash.
+
+            ### Command line
+
+            ```bash
+            esptool.py -p <PORT> write_flash 0x0 esp-scope-<variant>.bin
+            ```
+
+            Replace `<PORT>` with your serial port (e.g. `/dev/ttyUSB0` or `COM3`).
+          files: |
+            esp-scope-esp32/esp-scope-esp32.bin
+            esp-scope-xiao-esp32c6/esp-scope-xiao-esp32c6.bin
