@@ -37,16 +37,22 @@ jobs:
             --build-arg BOARD_SPECIFIC_INIT=${{ matrix.board_specific_init }} \
             -t esp-scope-${{ matrix.name }} .
 
-      - name: Extract binary (${{ matrix.name }})
+      - name: Extract binaries (${{ matrix.name }})
         run: |
           docker run --rm esp-scope-${{ matrix.name }} \
-            cat /workspace/build/esp-scope.bin > esp-scope-${{ matrix.name }}.bin
+            cat /workspace/build/merged-firmware.bin > esp-scope-${{ matrix.name }}-merged.bin
+          docker run --rm esp-scope-${{ matrix.name }} \
+            cat /workspace/build/bootloader/bootloader.bin > esp-scope-${{ matrix.name }}-bootloader.bin
+          docker run --rm esp-scope-${{ matrix.name }} \
+            cat /workspace/build/partition_table/partition-table.bin > esp-scope-${{ matrix.name }}-partition-table.bin
+          docker run --rm esp-scope-${{ matrix.name }} \
+            cat /workspace/build/esp-scope.bin > esp-scope-${{ matrix.name }}-app.bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: esp-scope-${{ matrix.name }}
-          path: esp-scope-${{ matrix.name }}.bin
+          path: esp-scope-${{ matrix.name }}-*.bin
 
   release:
     needs: build
@@ -77,28 +83,54 @@ jobs:
           body: |
             ## Firmware binaries
 
-            | File | Board | Target | LED GPIO | AP-Mode button GPIO |
-            |------|-------|--------|----------|---------------------|
-            | `esp-scope-esp32.bin` | Generic ESP32 | esp32 | 2 | 9 |
-            | `esp-scope-xiao-esp32c6.bin` | Seeed XIAO ESP32C6 | esp32c6 | 8 (built-in yellow LED) | 0 (Boot button) |
+            Each board ships four files:
 
-            ## Flashing
+            | Suffix | Contents | Use for |
+            |--------|----------|---------|
+            | `-merged.bin` | Bootloader + partition table + app in one file | Web installer, quick CLI flash |
+            | `-bootloader.bin` | Bootloader only | Individual flashing |
+            | `-partition-table.bin` | Partition table only | Individual flashing |
+            | `-app.bin` | Application only | OTA / app-only update |
 
-            ### Browser (easiest)
-
-            Download the `.bin` for your board above, then flash it in your browser — no drivers or tools needed:
-
-            👉 **[https://www.espboards.dev/tools/program/](https://www.espboards.dev/tools/program/)**
-
-            Works with Chrome, Edge, or Opera. Connect your ESP via USB, click **Connect to ESP**, select the `.bin` file, and flash.
-
-            ### Command line
+            ### Generic ESP32 — LED GPIO 2 · AP-mode button GPIO 9
 
             ```bash
-            esptool.py -p <PORT> write_flash 0x0 esp-scope-<variant>.bin
+            # Flash merged binary (simplest)
+            esptool.py -p <PORT> -b 460800 write_flash 0x0 esp-scope-esp32-merged.bin
+
+            # Or flash components individually
+            esptool.py -p <PORT> -b 460800 write_flash \
+              0x1000  esp-scope-esp32-bootloader.bin \
+              0x8000  esp-scope-esp32-partition-table.bin \
+              0x10000 esp-scope-esp32-app.bin
+            ```
+
+            ### Seeed XIAO ESP32C6 — LED GPIO 8 (built-in yellow) · AP-mode button GPIO 0 (Boot)
+
+            ```bash
+            # Flash merged binary (simplest)
+            esptool.py -p <PORT> -b 460800 write_flash 0x0 esp-scope-xiao-esp32c6-merged.bin
+
+            # Or flash components individually
+            esptool.py -p <PORT> -b 460800 write_flash \
+              0x0     esp-scope-xiao-esp32c6-bootloader.bin \
+              0x8000  esp-scope-xiao-esp32c6-partition-table.bin \
+              0x10000 esp-scope-xiao-esp32c6-app.bin
             ```
 
             Replace `<PORT>` with your serial port (e.g. `/dev/ttyUSB0` or `COM3`).
+
+            ## Web installer
+
+            Flash directly from your browser (Chrome/Edge/Opera) — no tools needed:
+
+            👉 **[https://vtalpaert.github.io/esp-scope/](https://vtalpaert.github.io/esp-scope/)**
           files: |
-            esp-scope-esp32/esp-scope-esp32.bin
-            esp-scope-xiao-esp32c6/esp-scope-xiao-esp32c6.bin
+            esp-scope-esp32/esp-scope-esp32-merged.bin
+            esp-scope-esp32/esp-scope-esp32-bootloader.bin
+            esp-scope-esp32/esp-scope-esp32-partition-table.bin
+            esp-scope-esp32/esp-scope-esp32-app.bin
+            esp-scope-xiao-esp32c6/esp-scope-xiao-esp32c6-merged.bin
+            esp-scope-xiao-esp32c6/esp-scope-xiao-esp32c6-bootloader.bin
+            esp-scope-xiao-esp32c6/esp-scope-xiao-esp32c6-partition-table.bin
+            esp-scope-xiao-esp32c6/esp-scope-xiao-esp32c6-app.bin

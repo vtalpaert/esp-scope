@@ -1,0 +1,39 @@
+name: Deploy Pages
+
+on:
+  workflow_run:
+    workflows: ["Release Firmware"]
+    types: [completed]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all release binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p webpage/firmware
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | while read tag; do
+            mkdir -p "webpage/firmware/$tag"
+            gh release download "$tag" --dir "webpage/firmware/$tag" --pattern "*.bin" 2>/dev/null || true
+          done
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: webpage/
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

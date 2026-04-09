@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESP-Scope Firmware Installer</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 520px;
+      width: 100%;
+      margin-top: 2rem;
+    }
+
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem; }
+
+    .section-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Version list */
+    .version-list {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .version-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      cursor: pointer;
+      border-bottom: 1px solid #1e293b;
+      background: #0f172a;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .version-item:last-child { border-bottom: none; }
+    .version-item:hover { background: #162032; }
+    .version-item.selected { background: #1e3a5f; }
+
+    .version-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #475569;
+      flex-shrink: 0;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .version-item.selected .version-dot {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .version-info { flex: 1; min-width: 0; }
+    .version-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.1em 0.5em;
+      border-radius: 999px;
+      background: #7c3aed33;
+      color: #c4b5fd;
+      border: 1px solid #7c3aed55;
+    }
+    .version-date {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 0.15rem;
+    }
+
+    .version-loading {
+      padding: 1rem;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.9rem;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Board list */
+    .board-list {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .board-item {
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid #1e293b;
+      background: #0f172a;
+    }
+    .board-item:last-child { border-bottom: none; }
+
+    .board-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .board-detail {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 0.1rem;
+    }
+
+    .board-missing {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+    .board-missing a { color: #7dd3fc; }
+
+    /* Install button */
+    .install-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+
+    esp-web-install-button::part(button) {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    esp-web-install-button::part(button):hover { background: #2563eb; }
+
+    .unsupported-msg {
+      background: #7c3aed22;
+      border: 1px solid #7c3aed55;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: #c4b5fd;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    hr { border: none; border-top: 1px solid #334155; margin: 1.25rem 0; }
+
+    .instructions { font-size: 0.9rem; color: #94a3b8; line-height: 1.6; }
+    .instructions ol { padding-left: 1.25rem; }
+    .instructions li { margin-bottom: 0.3rem; }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #475569;
+    }
+    footer a { color: #64748b; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>ESP-Scope Installer</h1>
+  <p class="subtitle">Flash the firmware directly from your browser — no tools needed.</p>
+
+  <div class="section-label">Select firmware version</div>
+  <div id="version-loading" class="version-loading">Loading releases…</div>
+  <div id="version-list" class="version-list" style="display:none"></div>
+
+  <div class="section-label">Supported boards in this release</div>
+  <div id="board-list" class="board-list" style="display:none"></div>
+  <p class="board-missing">
+    Your board not listed? <a href="https://github.com/vtalpaert/esp-scope/issues/new" target="_blank">Open an issue</a>
+  </p>
+
+  <div class="install-row">
+    <esp-web-install-button id="install-btn"></esp-web-install-button>
+  </div>
+
+  <div class="unsupported-msg" id="unsupported-msg">
+    Your browser does not support WebSerial. Please use Chrome, Edge, or Opera on desktop.
+  </div>
+
+  <hr />
+
+  <div class="instructions">
+    <ol>
+      <li>Connect your ESP32 via USB.</li>
+      <li>Select a firmware version above.</li>
+      <li>Click <strong>Install</strong> — the correct firmware is picked automatically for your chip.</li>
+      <li>Wait for flashing to complete, then reset the board.</li>
+    </ol>
+    <p style="margin-top:0.75rem">Requires <strong>Chrome</strong>, <strong>Edge</strong>, or <strong>Opera</strong> on desktop.</p>
+  </div>
+</div>
+
+<footer>
+  <a href="https://github.com/vtalpaert/esp-scope" target="_blank">vtalpaert/esp-scope</a>
+  &nbsp;·&nbsp; Powered by <a href="https://esphome.github.io/esp-web-tools/" target="_blank">esp-web-tools</a>
+</footer>
+
+<script>
+  // Static details for known board slugs (slug = filename part after "esp-scope-" and before "-merged.bin")
+  // chipFamily is required by esp-web-tools; label and detail are for display only.
+  var BOARD_DETAILS = {
+    'esp32':        { chipFamily: 'ESP32',    label: 'Generic ESP32',      detail: 'LED GPIO 2 · AP-mode button GPIO 9' },
+    'xiao-esp32c6': { chipFamily: 'ESP32-C6', label: 'Seeed XIAO ESP32C6', detail: 'LED GPIO 8 (built-in yellow) · AP-mode button GPIO 0 (Boot)' },
+  };
+
+  // Fallback: derive chipFamily from slug when not in BOARD_DETAILS
+  function chipFamilyFromSlug(slug) {
+    if (slug.indexOf('esp32c6') !== -1)  return 'ESP32-C6';
+    if (slug.indexOf('esp32s3') !== -1)  return 'ESP32-S3';
+    if (slug.indexOf('esp32s2') !== -1)  return 'ESP32-S2';
+    if (slug.indexOf('esp32c3') !== -1)  return 'ESP32-C3';
+    if (slug.indexOf('esp32h2') !== -1)  return 'ESP32-H2';
+    if (slug.indexOf('esp32')   !== -1)  return 'ESP32';
+    return null;
+  }
+
+  function slugFromFilename(name) {
+    var prefix = 'esp-scope-', suffix = '-merged.bin';
+    if (name.slice(0, prefix.length) === prefix && name.slice(-suffix.length) === suffix) {
+      return name.slice(prefix.length, -suffix.length);
+    }
+    return null;
+  }
+
+  // Parse .bin assets from a release into [{slug, chipFamily, url}]
+  function boardsFromRelease(release, baseUrl) {
+    var boards = [];
+    (release.assets || []).forEach(function(asset) {
+      var slug = slugFromFilename(asset.name);
+      if (!slug) return;
+      var known = BOARD_DETAILS[slug];
+      var chipFamily = known ? known.chipFamily : chipFamilyFromSlug(slug);
+      if (!chipFamily) return;
+      var url = new URL('firmware/' + release.tag_name + '/' + asset.name, baseUrl).href;
+      boards.push({ slug: slug, chipFamily: chipFamily, url: url });
+    });
+    return boards;
+  }
+
+  var installBtn   = document.getElementById('install-btn');
+  var versionList  = document.getElementById('version-list');
+  var boardList    = document.getElementById('board-list');
+  var loadingEl    = document.getElementById('version-loading');
+  var unsupported  = document.getElementById('unsupported-msg');
+
+  var currentManifestUrl = null;
+  var allReleases = [];
+
+  // ------------------------------------------------------------------
+  // Manifest + board display
+  // ------------------------------------------------------------------
+  function selectRelease(release) {
+    var boards = boardsFromRelease(release, window.location.href);
+
+    // Update board list display
+    boardList.innerHTML = '';
+    boards.forEach(function(b) {
+      var known = BOARD_DETAILS[b.slug];
+      var item = document.createElement('div');
+      item.className = 'board-item';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'board-name';
+      nameEl.textContent = known ? known.label : b.slug;
+      item.appendChild(nameEl);
+      if (known && known.detail) {
+        var detailEl = document.createElement('div');
+        detailEl.className = 'board-detail';
+        detailEl.textContent = known.detail;
+        item.appendChild(detailEl);
+      }
+      boardList.appendChild(item);
+    });
+    boardList.style.display = boards.length ? 'block' : 'none';
+
+    // Build manifest
+    var builds = boards.map(function(b) {
+      return { chipFamily: b.chipFamily, parts: [{ path: b.url, offset: 0 }] };
+    });
+    var manifest = { name: 'esp-scope', builds: builds };
+    if (currentManifestUrl) URL.revokeObjectURL(currentManifestUrl);
+    currentManifestUrl = URL.createObjectURL(
+      new Blob([JSON.stringify(manifest)], { type: 'application/json' })
+    );
+    installBtn.setAttribute('manifest', currentManifestUrl);
+  }
+
+  // ------------------------------------------------------------------
+  // Version comparison (semver-like, descending)
+  // ------------------------------------------------------------------
+  function versionParts(tag) {
+    return tag.replace(/^v/, '').split('.').map(function(n) { return parseInt(n, 10) || 0; });
+  }
+
+  function compareVersionsDesc(a, b) {
+    var pa = versionParts(a.tag_name), pb = versionParts(b.tag_name);
+    var len = Math.max(pa.length, pb.length);
+    for (var i = 0; i < len; i++) {
+      var diff = (pb[i] || 0) - (pa[i] || 0);
+      if (diff !== 0) return diff;
+    }
+    return 0;
+  }
+
+  // ------------------------------------------------------------------
+  // Render version list
+  // ------------------------------------------------------------------
+  function formatDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function renderVersionList(releases) {
+    var latestEntry = null, tagged = [];
+    releases.forEach(function(r) {
+      if (r.tag_name === 'latest') { latestEntry = r; } else { tagged.push(r); }
+    });
+    tagged.sort(compareVersionsDesc);
+    var ordered = latestEntry ? [latestEntry].concat(tagged) : tagged;
+
+    if (ordered.length === 0) {
+      loadingEl.textContent = 'No releases found.';
+      return;
+    }
+
+    allReleases = ordered;
+    versionList.innerHTML = '';
+
+    ordered.forEach(function(release, idx) {
+      var item = document.createElement('div');
+      item.className = 'version-item' + (idx === 0 ? ' selected' : '');
+
+      var dot = document.createElement('div');
+      dot.className = 'version-dot';
+
+      var info = document.createElement('div');
+      info.className = 'version-info';
+
+      var nameRow = document.createElement('div');
+      nameRow.className = 'version-name';
+      nameRow.textContent = release.tag_name;
+      if (release.prerelease) {
+        var badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = 'pre-release';
+        nameRow.appendChild(badge);
+      }
+
+      var dateRow = document.createElement('div');
+      dateRow.className = 'version-date';
+      dateRow.textContent = formatDate(release.published_at);
+
+      info.appendChild(nameRow);
+      info.appendChild(dateRow);
+      item.appendChild(dot);
+      item.appendChild(info);
+
+      item.addEventListener('click', function() {
+        versionList.querySelectorAll('.version-item').forEach(function(el) {
+          el.classList.remove('selected');
+        });
+        item.classList.add('selected');
+        selectRelease(release);
+      });
+
+      versionList.appendChild(item);
+    });
+
+    loadingEl.style.display = 'none';
+    versionList.style.display = 'block';
+    selectRelease(ordered[0]);
+  }
+
+  // ------------------------------------------------------------------
+  // Fetch all releases
+  // ------------------------------------------------------------------
+  fetch('https://api.github.com/repos/vtalpaert/esp-scope/releases')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        loadingEl.textContent = 'No releases found.';
+        return;
+      }
+      renderVersionList(data);
+    })
+    .catch(function() {
+      loadingEl.textContent = 'Could not load releases. Check your connection.';
+    });
+
+  // ------------------------------------------------------------------
+  // WebSerial check
+  // ------------------------------------------------------------------
+  if (!('serial' in navigator)) {
+    unsupported.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>

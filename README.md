@@ -20,17 +20,15 @@ This project was written in part to test AI code generators and see if they're a
 
 ### Quickstart — Flash without installing anything
 
-Pre-built firmware binaries are available on the [Releases page](https://github.com/vtalpaert/esp-scope/releases/).
+Pre-built firmware binaries are available on the [Releases page](https://github.com/vtalpaert/esp-scope/releases/):
+- `esp-scope-esp32-merged.bin` — generic ESP32
+- `esp-scope-xiao-esp32c6-merged.bin` — Seeed XIAO ESP32C6
 
-1. Download the `.bin` file for your board:
-   - `esp-scope-esp32.bin` — generic ESP32
-   - `esp-scope-xiao-esp32c6.bin` — Seeed XIAO ESP32C6
+Connect your ESP32 via USB and flash directly from your browser — no drivers or toolchain needed:
 
-2. Connect your ESP32 via USB, then flash directly in your browser (Chrome, Edge, or Opera):
+👉 **[https://vtalpaert.github.io/esp-scope/](https://vtalpaert.github.io/esp-scope/)**
 
-   👉 **[https://www.espboards.dev/tools/program/](https://www.espboards.dev/tools/program/)**
-
-No drivers, no toolchain required.
+Works with Chrome, Edge, or Opera. Select your firmware version, click **Install**, and the correct binary is picked automatically for your chip.
 
 ---
 
@@ -94,16 +92,15 @@ If you don't have ESP-IDF installed locally, you can build the firmware using th
      -t esp-scope-firmware .
    ```
 
-2. Copy the firmware binary out of the image:
+2. Copy the merged firmware binary out of the image:
    ```bash
-   docker run --rm esp-scope-firmware cat /workspace/build/esp-scope.bin > esp-scope.bin
+   docker run --rm esp-scope-firmware cat /workspace/build/merged-firmware.bin > esp-scope-esp32-merged.bin
    ```
 
 3. Flash from within Docker (Linux only, requires access to the host USB device):
    ```bash
    docker run --rm --device=/dev/ttyUSB0 esp-scope-firmware \
-     bash -c "source /opt/esp/idf/export.sh > /dev/null 2>&1 && \
-              idf.py -p /dev/ttyUSB0 flash"
+     bash -c "esptool.py -p /dev/ttyUSB0 -b 460800 write_flash 0x0 build/merged-firmware.bin"
    ```
    Replace `/dev/ttyUSB0` with your serial port. On macOS/Windows, flashing from inside Docker is not supported due to USB passthrough limitations — copy the binary out and flash with `esptool.py` directly.
 
