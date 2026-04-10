@@ -39,14 +39,12 @@ jobs:
 
       - name: Extract binaries (${{ matrix.name }})
         run: |
-          docker run --rm esp-scope-${{ matrix.name }} \
-            cat /workspace/build/merged-firmware.bin > esp-scope-${{ matrix.name }}-merged.bin
-          docker run --rm esp-scope-${{ matrix.name }} \
-            cat /workspace/build/bootloader/bootloader.bin > esp-scope-${{ matrix.name }}-bootloader.bin
-          docker run --rm esp-scope-${{ matrix.name }} \
-            cat /workspace/build/partition_table/partition-table.bin > esp-scope-${{ matrix.name }}-partition-table.bin
-          docker run --rm esp-scope-${{ matrix.name }} \
-            cat /workspace/build/esp-scope.bin > esp-scope-${{ matrix.name }}-app.bin
+          cid=$(docker create esp-scope-${{ matrix.name }})
+          docker cp "$cid:/workspace/build/merged-firmware.bin"            esp-scope-${{ matrix.name }}-merged.bin
+          docker cp "$cid:/workspace/build/bootloader/bootloader.bin"      esp-scope-${{ matrix.name }}-bootloader.bin
+          docker cp "$cid:/workspace/build/partition_table/partition-table.bin" esp-scope-${{ matrix.name }}-partition-table.bin
+          docker cp "$cid:/workspace/build/esp-scope.bin"                  esp-scope-${{ matrix.name }}-app.bin
+          docker rm "$cid"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

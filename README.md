@@ -94,7 +94,9 @@ If you don't have ESP-IDF installed locally, you can build the firmware using th
 
 2. Copy the merged firmware binary out of the image:
    ```bash
-   docker run --rm esp-scope-firmware cat /workspace/build/merged-firmware.bin > esp-scope-esp32-merged.bin
+   cid=$(docker create esp-scope-firmware)
+   docker cp "$cid:/workspace/build/merged-firmware.bin" esp-scope-esp32-merged.bin
+   docker rm "$cid"
    ```
 
 3. Flash from within Docker (Linux only, requires access to the host USB device):
