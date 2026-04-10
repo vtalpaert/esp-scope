@@ -1,18 +1,20 @@
 # ESP-Scope
 
 ## Overview
-ESP-Scope is a web-based oscilloscope built using the ESP-IDF framework. It allows users to visualize analog signals in real-time through a web browser. The project leverages the ESP32's ADC capabilities and serves a web interface for signal visualization. It contains complete source code and 3D design for a case for the Seeed XIAO ESP32C6.
+ESP-Scope is a web-based oscilloscope built using the ESP-IDF v5 framework. It allows users to visualize analog signals in real-time through a web browser. The project leverages the ESP32's ADC capabilities and serves a web interface for signal visualization. By default, one of the ESP pins generates a PWM signal, useful for debugging or generating configurable pulses.
 
-This project was written in part to test AI code generators and see if they're any good. Much of the code was written by Google Antigravity using Gemini 3, with refinements, hints and tips and overall design specified by a human. The whole app was up and running a few hours and finished, including 3D design in a weekend.
+It also contains a 3D design for a case for the Seeed XIAO ESP32C6.
 
-![esp-scope](screenshot.png)
+> Parts of this project were written with AI assistance and are provided as-is, without guarantee.
+
+![ESP-Scope web interface](screenshot.png)
 
 ## Features
 - Real-time signal visualization on a web browser.
 - Adjustable sample rate (1-83333 Hz) and attenuation.
 - Crosshair functionality for precise measurements.
 - Adjustable trigger level.
-- Test signal generation.
+- Test PWM signal generation.
 - Reset functionality to clear settings and reload the interface.
 - Power off from the browser.
 
@@ -41,7 +43,7 @@ Works with Chrome, Edge, or Opera. Select your firmware version, click **Install
 ### Downloading the Project
 1. Clone the repository:
    ```bash
-   git clone https://github.com/MatAtBread/esp-scope.git
+   git clone https://github.com/vtalpaert/esp-scope.git
    ```
 2. Navigate to the project directory:
    ```bash
@@ -115,9 +117,7 @@ If you don't have ESP-IDF installed locally, you can build the firmware using th
 
 ### Using the esp-scope
 
-If your DHCP server supports it (most seem to), the app sets its hostname and you can just navigate to http://esp-scope (you may have/need a default domain extension)
-
-1. After flashing, ESP-SCOPE will start as a WiFi access point. Connect to it to access the UI.
+1. After flashing, ESP-Scope will start as a WiFi access point. Connect to it to access the UI.
 2. If desired, click the "WiFi" button and set your SSID & WiFi password. The device will reboot and join your network. Pressing and holding the GPIO "AP-Mode" button will erase the WiFi credentials and return to Access Point mode.
 3. Open a web browser and navigate to "http://esp-scope" (you may have/need a default domain extension).
 4. Use the web interface to:
@@ -125,29 +125,32 @@ If your DHCP server supports it (most seem to), the app sets its hostname and yo
    - Visualize signals in real-time.
    - Reset the interface using the "Reset" button.
    - Re-configure the WiFi using the "WiFi" button.
-   - Power off the device
+   - Power off the device.
 
 The LED indicates one of four conditions:
-* Continuously lit: waiting to attach to a wifi network or starting the wireless AP
-* Equal 1 second flash: in AP mode - connect to the "ESP-Scope" access point
-* Slow, brief flashes: connected to the WiFi SSID set in the web UI
-* Rapid, brief flashes: sending data to an active client
+
+| LED behaviour       | State                                      |
+|---------------------|--------------------------------------------|
+| Continuously lit    | Connecting to WiFi / starting wireless AP  |
+| 1s equal flash      | AP mode — connect to the "ESP-Scope" AP    |
+| Slow, brief flashes | Connected to the WiFi SSID set in the UI   |
+| Rapid, brief flashes| Sending data to an active client           |
 
 ### Attaching hardware
 
-The displayed signal is sampled from ADC0. The test signal is output on D1. The default GPIOs for the LED and "AP-Mode" button are 15 and 9 respectively (hard-wired on an Seeed XIAO ESP32C6 to the yellow LED and "Boot" button).
+The displayed signal is sampled from ADC0. The test signal is output on D1. The default GPIOs for the LED and "AP-Mode" button are 15 and 9 respectively (hard-wired on a Seeed XIAO ESP32C6 to the yellow LED and "Boot" button).
 
 ## 3D design
 
 The 3D design is a two part case with space for a AA-battery (Li-poly 3.7v, which can connect directly to a Seeed XIAO ESP device) clips and holes for the USB-C connector and "ground", "signal" and "test" connections using standard 2.54mm pitch, easily cut from jumpers and soldered directly to the Seeed XIAO. The 3D design was done using Fusion 360 and printed on a Bambu Labs A1 Mini in 30 minutes.
 
-I recommend putting the "Signal" connection in the middle, and never connecting the outer-most pins (ground and test) to avoid shorting the test signal to ground and (probably) frying the esp32. The middle (signal) pin can be connected to either of its neigbours and you'll see either the ground or the test signal.
+I recommend putting the "Signal" connection in the middle, and never connecting the outer-most pins (ground and test) to avoid shorting the test signal to ground and (probably) frying the esp32. The middle (signal) pin can be connected to either of its neighbours and you'll see either the ground or the test signal.
 
-![esp-scope](esp-scope-3d.jpg)
+![ESP-Scope 3D case](esp-scope-3d.jpg)
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgments
 - Built using the ESP-IDF framework by Espressif Systems.
-- Gemini 3.
+- Forked from [MatAtBread/esp-scope](https://github.com/MatAtBread/esp-scope).
