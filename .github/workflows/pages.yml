@@ -19,6 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Copy static assets
+        run: cp screenshot.png webpage/screenshot.png
+
       - name: Download all release binaries
         env:
           GH_TOKEN: ${{ github.token }}
