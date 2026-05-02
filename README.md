@@ -1,4 +1,6 @@
-# ESP-Scope
+# ESP-Scope — Web Oscilloscope for ESP32
+
+> Real-time analog signal visualization in any browser, served directly from an ESP32 over WiFi. Flash firmware in one click — no drivers or toolchain needed.
 
 ## Overview
 ESP-Scope is a web-based oscilloscope built using the ESP-IDF v5 framework. It allows users to visualize analog signals in real-time through a web browser. The project leverages the ESP32's ADC capabilities and serves a web interface for signal visualization. By default, one of the ESP pins generates a PWM signal, useful for debugging or generating configurable pulses.
@@ -9,18 +11,7 @@ It also contains a 3D design for a case for the Seeed XIAO ESP32C6.
 
 ![ESP-Scope web interface](screenshot.png)
 
-## Features
-- Real-time signal visualization on a web browser.
-- Adjustable sample rate (1-83333 Hz) and attenuation.
-- Crosshair functionality for precise measurements.
-- Adjustable trigger level.
-- Test PWM signal generation.
-- Reset functionality to clear settings and reload the interface.
-- Power off from the browser.
-
-## Getting Started
-
-### Quickstart — Flash without installing anything
+### Flash without installing anything
 
 Pre-built firmware binaries are available on the [Releases page](https://github.com/vtalpaert/esp-scope/releases/):
 - `esp-scope-esp32-merged.bin` — generic ESP32
@@ -33,6 +24,17 @@ Connect your ESP32 via USB and flash directly from your browser — no drivers o
 Works with Chrome, Edge, or Opera. Select your firmware version, click **Install**, and the correct binary is picked automatically for your chip.
 
 ---
+
+## Features
+- Real-time signal visualization on a web browser.
+- Adjustable sample rate (1-83333 Hz) and attenuation.
+- Crosshair functionality for precise measurements.
+- Adjustable trigger level.
+- Test PWM signal generation.
+- Reset functionality to clear settings and reload the interface.
+- Power off from the browser.
+
+## Getting Started
 
 ### Prerequisites
 - ESP32 development board.
